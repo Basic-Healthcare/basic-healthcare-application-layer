@@ -28,12 +28,14 @@ A healthcare application with Azure Blob Storage integration and automated deplo
 ### Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd basic-healthcare-application-layer
    ```
 
 2. **Configure Azure authentication**
+
    - Follow the detailed setup guide in [AZURE_SETUP.md](./AZURE_SETUP.md)
    - Create GitHub secrets for Azure authentication
 
@@ -72,14 +74,16 @@ python upload_to_blob.py
 ## GitHub Actions Workflows
 
 ### 🚀 Azure Deploy (`azure-deploy.yml`)
+
 - **Trigger**: Push to main branch, manual dispatch
-- **Jobs**: 
+- **Jobs**:
   - Terraform planning and validation
   - Infrastructure deployment
   - Python application testing
   - Application deployment verification
 
 ### 🧪 Test (`test.yml`)
+
 - **Trigger**: Push to any branch, pull requests
 - **Purpose**: Code quality checks and syntax validation
 - **Matrix**: Tests across Python 3.9, 3.10, and 3.11
@@ -109,6 +113,7 @@ python upload_to_blob.py
 ## Support
 
 For issues and questions:
+
 1. Check the GitHub Actions logs for deployment issues
 2. Review the Azure Setup guide for configuration problems
 3. Create an issue in this repository
