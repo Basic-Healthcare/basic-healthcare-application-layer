@@ -46,64 +46,43 @@ locals {
   storage_account_name = "healthcarestorefv0vlbg2"
 }
 
-resource "azurerm_resource_group" "healthcare_rg" {
-  name     = var.resource_group_name
-  location = var.location
-
-  tags = {
-    Environment = var.environment
-    Project     = "HealthcareApp"
-    ManagedBy   = "Terraform"
-  }
+# Use data sources for existing resources to avoid conflicts
+data "azurerm_resource_group" "healthcare_rg" {
+  name = var.resource_group_name
 }
 
-resource "azurerm_storage_account" "healthcare_storage" {
-  name                     = local.storage_account_name
-  resource_group_name      = azurerm_resource_group.healthcare_rg.name
-  location                 = azurerm_resource_group.healthcare_rg.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  min_tls_version          = "TLS1_2"
-
-  # Security settings
-  public_network_access_enabled   = true
-  allow_nested_items_to_be_public = false
-
-  tags = {
-    Environment = var.environment
-    Project     = "HealthcareApp"
-    ManagedBy   = "Terraform"
-  }
+data "azurerm_storage_account" "healthcare_storage" {
+  name                = local.storage_account_name
+  resource_group_name = data.azurerm_resource_group.healthcare_rg.name
 }
 
-resource "azurerm_storage_container" "healthcare_container" {
-  name                  = "healthcare-files"
-  storage_account_name  = azurerm_storage_account.healthcare_storage.name
-  container_access_type = "private"
+data "azurerm_storage_container" "healthcare_container" {
+  name                 = "healthcare-files"
+  storage_account_name = data.azurerm_storage_account.healthcare_storage.name
 }
 
 # Outputs for GitHub Actions
 output "resource_group_name" {
-  description = "Name of the created resource group"
-  value       = azurerm_resource_group.healthcare_rg.name
+  description = "Name of the resource group"
+  value       = data.azurerm_resource_group.healthcare_rg.name
 }
 
 output "storage_account_name" {
-  description = "Name of the created storage account"
-  value       = azurerm_storage_account.healthcare_storage.name
+  description = "Name of the storage account"
+  value       = data.azurerm_storage_account.healthcare_storage.name
 }
 
 output "container_name" {
-  description = "Name of the created container"
-  value       = azurerm_storage_container.healthcare_container.name
+  description = "Name of the container"
+  value       = data.azurerm_storage_container.healthcare_container.name
 }
 
 output "storage_account_id" {
   description = "ID of the storage account"
-  value       = azurerm_storage_account.healthcare_storage.id
+  value       = data.azurerm_storage_account.healthcare_storage.id
 }
 
 output "primary_blob_endpoint" {
   description = "Primary blob endpoint of the storage account"
-  value       = azurerm_storage_account.healthcare_storage.primary_blob_endpoint
+  value       = data.azurerm_storage_account.healthcare_storage.primary_blob_endpoint
 }
