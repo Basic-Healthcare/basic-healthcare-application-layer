@@ -1,4 +1,4 @@
-name: 'Terraform Azure Healthcare Storage'
+name: "Terraform Azure Healthcare Storage"
 
 on:
   push:

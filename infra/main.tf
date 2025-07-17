@@ -16,7 +16,7 @@ resource "azurerm_storage_account" "healthcare_storage" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
-  allow_blob_public_access = false
+  # allow_blob_public_access removed (unsupported argument)
 }
 
 resource "azurerm_storage_container" "healthcare_container" {
