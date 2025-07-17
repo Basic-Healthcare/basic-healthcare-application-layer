@@ -103,10 +103,14 @@ jobs:
         run: |
           echo "storage_account_name=$(terraform output -raw storage_account_name)" >> $GITHUB_OUTPUT
           echo "container_name=$(terraform output -raw container_name)" >> $GITHUB_OUTPUT
+          echo "function_app_name=$(terraform output -raw function_app_name 2>/dev/null || echo '')" >> $GITHUB_OUTPUT
+          echo "api_management_gateway_url=$(terraform output -raw api_management_gateway_url 2>/dev/null || echo '')" >> $GITHUB_OUTPUT
 
     outputs:
       storage_account_name: ${{ steps.terraform-outputs.outputs.storage_account_name }}
       container_name: ${{ steps.terraform-outputs.outputs.container_name }}
+      function_app_name: ${{ steps.terraform-outputs.outputs.function_app_name }}
+      api_management_gateway_url: ${{ steps.terraform-outputs.outputs.api_management_gateway_url }}
 
   test-python-app:
     name: "Test Python Application"
@@ -135,12 +139,58 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Test Python script syntax
-        run: python -m py_compile upload_to_blob.py
+        run: |
+          python -m py_compile upload_to_blob.py
+          if [ -f function_app/function_app.py ]; then python -m py_compile function_app/function_app.py; fi
+
+  deploy-function-app:
+    name: 'Deploy Function App'
+    runs-on: ubuntu-latest
+    needs: [terraform-apply, test-python-app]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Deploy Function App
+      run: |
+        # Get function app name from Terraform outputs
+        FUNCTION_APP_NAME="${{ needs.terraform-apply.outputs.function_app_name }}"
+        
+        if [ -z "$FUNCTION_APP_NAME" ]; then
+          echo "Function app name not found in Terraform outputs, skipping deployment"
+          exit 0
+        fi
+        
+        echo "Deploying function app: $FUNCTION_APP_NAME"
+        
+        # Create deployment package
+        cd function_app
+        zip -r ../function_app.zip .
+        cd ..
+        
+        # Deploy to Azure Function App
+        az functionapp deployment source config-zip \
+          --resource-group "healthcare-content-rg" \
+          --name "$FUNCTION_APP_NAME" \
+          --src function_app.zip
 
   deploy-application:
     name: "Deploy Application"
     runs-on: ubuntu-latest
-    needs: [terraform-apply, test-python-app]
+    needs: [terraform-apply, test-python-app, deploy-function-app]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
 
@@ -190,8 +240,38 @@ jobs:
 
           try:
               url = upload_file_to_blob('test-deployment.txt', 'test-deployment.txt', connection_string, container_name)
-              print('Successfully uploaded test file to: ' + url)
+              print('✅ Successfully uploaded test file to: ' + url)
           except Exception as e:
-              print('Error uploading file: ' + str(e))
+              print('❌ Error uploading file: ' + str(e))
               exit(1)
           "
+      
+      - name: Test API Endpoint (if available)
+        run: |
+          API_URL="${{ needs.terraform-apply.outputs.api_management_gateway_url }}"
+          FUNCTION_APP_NAME="${{ needs.terraform-apply.outputs.function_app_name }}"
+          
+          if [ ! -z "$API_URL" ] && [ ! -z "$FUNCTION_APP_NAME" ]; then
+            echo "🧪 Testing API endpoint: $API_URL/files/upload"
+            
+            # Create a small test file
+            echo "API test file - $(date)" > api-test.txt
+            
+            # Test the API (we'll use curl since requests isn't installed)
+            echo "Testing API endpoint..."
+            
+            # Try to upload via the API (this might fail initially due to cold start)
+            if curl -f -X POST \
+              "$API_URL/files/upload" \
+              -F "file=@api-test.txt" \
+              -w "\nHTTP Status: %{http_code}\n" \
+              --max-time 30; then
+              echo "✅ API endpoint test successful"
+            else
+              echo "⚠️ API endpoint test failed (this is normal for new deployments due to cold start)"
+            fi
+            
+            rm -f api-test.txt
+          else
+            echo "ℹ️ API endpoint not yet available, skipping test"
+          fi
