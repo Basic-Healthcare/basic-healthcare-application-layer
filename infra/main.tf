@@ -8,7 +8,7 @@ terraform {
       version = "~> 3.0"
     }
   }
-  
+
   # Uncomment and configure for production use with remote state
   # backend "azurerm" {
   #   resource_group_name  = "terraform-state-rg"
@@ -51,7 +51,7 @@ resource "random_string" "suffix" {
 resource "azurerm_resource_group" "healthcare_rg" {
   name     = var.resource_group_name
   location = var.location
-  
+
   tags = {
     Environment = var.environment
     Project     = "HealthcareApp"
@@ -66,11 +66,11 @@ resource "azurerm_storage_account" "healthcare_storage" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
   min_tls_version          = "TLS1_2"
-  
+
   # Security settings
-  public_network_access_enabled = true
+  public_network_access_enabled   = true
   allow_nested_items_to_be_public = false
-  
+
   tags = {
     Environment = var.environment
     Project     = "HealthcareApp"
