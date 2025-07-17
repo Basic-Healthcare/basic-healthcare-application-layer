@@ -1,10 +1,13 @@
 import azure.functions as func
 import logging
 import json
-import os
 from azure.storage.blob import BlobServiceClient
-import uuid
+import os
 from datetime import datetime
+import uuid
+import tempfile
+
+# Test deployment - Version 2.0 - Updated for new deployment
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
