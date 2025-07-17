@@ -77,7 +77,7 @@ resource "azurerm_service_plan" "healthcare_plan" {
 }
 
 resource "azurerm_linux_function_app" "healthcare_function" {
-  name                = "healthcare-file-api-${random_id.function_suffix.hex}"
+  name                = "healthcare-file-api-${random_id.function_suffix.id}"
   resource_group_name = data.azurerm_resource_group.healthcare_rg.name
   location            = data.azurerm_resource_group.healthcare_rg.location
   service_plan_id     = azurerm_service_plan.healthcare_plan.id
@@ -110,12 +110,12 @@ resource "azurerm_linux_function_app" "healthcare_function" {
 
 # Random ID for globally unique function app name
 resource "random_id" "function_suffix" {
-  byte_length = 4
+  byte_length = 6
 }
 
 # Create API Management instance
 resource "azurerm_api_management" "healthcare_apim" {
-  name                = "healthcare-api-${random_id.apim_suffix.hex}"
+  name                = "healthcare-api-${random_id.apim_suffix.id}"
   location            = data.azurerm_resource_group.healthcare_rg.location
   resource_group_name = data.azurerm_resource_group.healthcare_rg.name
   publisher_name      = "Healthcare Organization"

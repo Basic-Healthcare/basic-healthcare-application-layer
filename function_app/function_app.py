@@ -6,7 +6,7 @@ from azure.storage.blob import BlobServiceClient
 import uuid
 from datetime import datetime
 
-app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
+app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
 @app.route(route="upload", methods=["POST"])
 def upload_file(req: func.HttpRequest) -> func.HttpResponse:

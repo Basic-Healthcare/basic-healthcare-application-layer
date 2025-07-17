@@ -48,6 +48,11 @@ venv.bak/
 # OS files
 .DS_Store
 .DS_Store?
+
+# Deployment artifacts - DO NOT CHECK IN
+*.zip
+function_app.zip
+function_app_v2.zip
 ._*
 .Spotlight-V100
 .Trashes
