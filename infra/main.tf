@@ -41,11 +41,9 @@ variable "resource_group_name" {
   default     = "healthcare-content-rg"
 }
 
-# Generate a random suffix for globally unique names
-resource "random_string" "suffix" {
-  length  = 8
-  special = false
-  upper   = false
+# Use the existing storage account name directly
+locals {
+  storage_account_name = "healthcarestorefv0vlbg2"
 }
 
 resource "azurerm_resource_group" "healthcare_rg" {
@@ -60,7 +58,7 @@ resource "azurerm_resource_group" "healthcare_rg" {
 }
 
 resource "azurerm_storage_account" "healthcare_storage" {
-  name                     = "healthcarestore${random_string.suffix.result}"
+  name                     = local.storage_account_name
   resource_group_name      = azurerm_resource_group.healthcare_rg.name
   location                 = azurerm_resource_group.healthcare_rg.location
   account_tier             = "Standard"
