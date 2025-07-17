@@ -167,24 +167,27 @@ jobs:
         run: |
           # Create a test file
           echo "Test deployment from GitHub Actions - $(date)" > test-deployment.txt
-
+          
           # Get storage account connection string
           STORAGE_ACCOUNT_NAME="${{ needs.terraform-apply.outputs.storage_account_name }}"
           RESOURCE_GROUP="healthcare-content-rg"
-
+          
           CONNECTION_STRING=$(az storage account show-connection-string \
             --name $STORAGE_ACCOUNT_NAME \
             --resource-group $RESOURCE_GROUP \
             --output tsv)
-
+          
+          # Export the connection string for the Python script
+          export AZURE_STORAGE_CONNECTION_STRING="$CONNECTION_STRING"
+          
           # Test the upload functionality
           python -c "
           import os
           from upload_to_blob import upload_file_to_blob
-
+          
           connection_string = os.environ['AZURE_STORAGE_CONNECTION_STRING']
           container_name = '${{ needs.terraform-apply.outputs.container_name }}'
-
+          
           try:
               url = upload_file_to_blob('test-deployment.txt', 'test-deployment.txt', connection_string, container_name)
               print('Successfully uploaded test file to: ' + url)
@@ -192,5 +195,3 @@ jobs:
               print('Error uploading file: ' + str(e))
               exit(1)
           "
-        env:
-          AZURE_STORAGE_CONNECTION_STRING: ${{ env.CONNECTION_STRING }}
