@@ -23,14 +23,17 @@ Azure Blob Storage (healthcare-files container)
 ## Request Format
 
 ### Headers
+
 - `Content-Type: multipart/form-data`
 - `Ocp-Apim-Subscription-Key: <your-api-key>` (if API key is configured)
 
 ### Body Parameters
+
 - `file` (required): The file to upload (binary data)
 - `fileName` (optional): Custom file name
 
 ### Example using cURL
+
 ```bash
 curl -X POST "https://your-apim.azure-api.net/files/upload" \
   -H "Content-Type: multipart/form-data" \
@@ -38,6 +41,7 @@ curl -X POST "https://your-apim.azure-api.net/files/upload" \
 ```
 
 ### Example using Python
+
 ```python
 import requests
 
@@ -53,31 +57,33 @@ else:
 ```
 
 ### Example using JavaScript (Browser)
+
 ```javascript
 const formData = new FormData();
-formData.append('file', fileInput.files[0]);
+formData.append("file", fileInput.files[0]);
 
-fetch('https://your-apim.azure-api.net/files/upload', {
-    method: 'POST',
-    body: formData
+fetch("https://your-apim.azure-api.net/files/upload", {
+  method: "POST",
+  body: formData,
 })
-.then(response => response.json())
-.then(data => {
-    console.log('Upload successful:', data.fileUrl);
-})
-.catch(error => {
-    console.error('Upload failed:', error);
-});
+  .then((response) => response.json())
+  .then((data) => {
+    console.log("Upload successful:", data.fileUrl);
+  })
+  .catch((error) => {
+    console.error("Upload failed:", error);
+  });
 ```
 
 ## Response Format
 
 ### Success Response (200)
+
 ```json
 {
   "message": "File uploaded successfully",
   "fileName": "20250717_143052_a1b2c3d4.pdf",
-  "originalFileName": "document.pdf", 
+  "originalFileName": "document.pdf",
   "fileUrl": "https://healthcarestorefv0vlbg2.blob.core.windows.net/healthcare-files/20250717_143052_a1b2c3d4.pdf",
   "uploadTime": "2025-07-17T14:30:52.123456",
   "fileSize": 1024
@@ -87,6 +93,7 @@ fetch('https://your-apim.azure-api.net/files/upload', {
 ### Error Responses
 
 #### 400 Bad Request
+
 ```json
 {
   "error": "No file provided. Please include a 'file' in your form data."
@@ -94,6 +101,7 @@ fetch('https://your-apim.azure-api.net/files/upload', {
 ```
 
 #### 500 Internal Server Error
+
 ```json
 {
   "error": "Error uploading file: <error details>"
@@ -175,7 +183,8 @@ Key environment variables in the Function App:
 
 ---
 
-**Next Steps**: 
+**Next Steps**:
+
 1. Configure API keys in API Management for production use
 2. Set up custom domains and SSL certificates
 3. Implement file validation and scanning

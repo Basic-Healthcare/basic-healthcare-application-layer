@@ -144,48 +144,48 @@ jobs:
           if [ -f function_app/function_app.py ]; then python -m py_compile function_app/function_app.py; fi
 
   deploy-function-app:
-    name: 'Deploy Function App'
+    name: "Deploy Function App"
     runs-on: ubuntu-latest
     needs: [terraform-apply, test-python-app]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
-    
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Azure Login
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
-    
-    - name: Deploy Function App
-      run: |
-        # Get function app name from Terraform outputs
-        FUNCTION_APP_NAME="${{ needs.terraform-apply.outputs.function_app_name }}"
-        
-        if [ -z "$FUNCTION_APP_NAME" ]; then
-          echo "Function app name not found in Terraform outputs, skipping deployment"
-          exit 0
-        fi
-        
-        echo "Deploying function app: $FUNCTION_APP_NAME"
-        
-        # Create deployment package
-        cd function_app
-        zip -r ../function_app.zip .
-        cd ..
-        
-        # Deploy to Azure Function App
-        az functionapp deployment source config-zip \
-          --resource-group "healthcare-content-rg" \
-          --name "$FUNCTION_APP_NAME" \
-          --src function_app.zip
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Function App
+        run: |
+          # Get function app name from Terraform outputs
+          FUNCTION_APP_NAME="${{ needs.terraform-apply.outputs.function_app_name }}"
+
+          if [ -z "$FUNCTION_APP_NAME" ]; then
+            echo "Function app name not found in Terraform outputs, skipping deployment"
+            exit 0
+          fi
+
+          echo "Deploying function app: $FUNCTION_APP_NAME"
+
+          # Create deployment package
+          cd function_app
+          zip -r ../function_app.zip .
+          cd ..
+
+          # Deploy to Azure Function App
+          az functionapp deployment source config-zip \
+            --resource-group "healthcare-content-rg" \
+            --name "$FUNCTION_APP_NAME" \
+            --src function_app.zip
 
   deploy-application:
     name: "Deploy Application"
@@ -245,12 +245,12 @@ jobs:
               print('❌ Error uploading file: ' + str(e))
               exit(1)
           "
-      
+
       - name: Test API Endpoint (if available)
         run: |
           API_URL="${{ needs.terraform-apply.outputs.api_management_gateway_url }}"
           FUNCTION_APP_NAME="${{ needs.terraform-apply.outputs.function_app_name }}"
-          
+
           if [ ! -z "$API_URL" ] && [ ! -z "$FUNCTION_APP_NAME" ]; then
             echo "🧪 Testing API endpoint: $API_URL/files/upload"
             
