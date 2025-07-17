@@ -46,26 +46,45 @@ resource "random_id" "apim_suffix" {
   byte_length = 4
 }
 
-# Data sources for existing resources
-data "azurerm_resource_group" "healthcare_rg" {
-  name = var.resource_group_name
+# Create or use existing resource group
+resource "azurerm_resource_group" "healthcare_rg" {
+  name     = var.resource_group_name
+  location = var.location
+
+  tags = {
+    Environment = var.environment
+    Project     = "HealthcareApp"
+    ManagedBy   = "Terraform"
+  }
 }
 
-data "azurerm_storage_account" "healthcare_storage" {
-  name                = "healthcarestorefv0vlbg2"
-  resource_group_name = data.azurerm_resource_group.healthcare_rg.name
+# Create storage account if it doesn't exist
+resource "azurerm_storage_account" "healthcare_storage" {
+  name                     = "healthcarestorefv0vlbg2"
+  resource_group_name      = azurerm_resource_group.healthcare_rg.name
+  location                 = azurerm_resource_group.healthcare_rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+
+  tags = {
+    Environment = var.environment
+    Project     = "HealthcareApp"
+    ManagedBy   = "Terraform"
+  }
 }
 
-data "azurerm_storage_container" "healthcare_container" {
-  name                 = "healthcare-files"
-  storage_account_name = data.azurerm_storage_account.healthcare_storage.name
+# Create storage container
+resource "azurerm_storage_container" "healthcare_container" {
+  name                  = "healthcare-files"
+  storage_account_name  = azurerm_storage_account.healthcare_storage.name
+  container_access_type = "private"
 }
 
 # Create new Azure Service Plan
 resource "azurerm_service_plan" "healthcare_plan" {
   name                = "healthcare-function-plan-${random_id.function_suffix.hex}"
-  resource_group_name = data.azurerm_resource_group.healthcare_rg.name
-  location            = var.location
+  resource_group_name = azurerm_resource_group.healthcare_rg.name
+  location            = azurerm_resource_group.healthcare_rg.location
   os_type             = "Linux"
   sku_name            = "Y1"
 
@@ -79,12 +98,12 @@ resource "azurerm_service_plan" "healthcare_plan" {
 # Create new Azure Function App
 resource "azurerm_linux_function_app" "healthcare_function" {
   name                = "healthcare-file-api-${random_id.function_suffix.hex}"
-  resource_group_name = data.azurerm_resource_group.healthcare_rg.name
-  location            = var.location
+  resource_group_name = azurerm_resource_group.healthcare_rg.name
+  location            = azurerm_resource_group.healthcare_rg.location
   service_plan_id     = azurerm_service_plan.healthcare_plan.id
 
-  storage_account_name       = data.azurerm_storage_account.healthcare_storage.name
-  storage_account_access_key = data.azurerm_storage_account.healthcare_storage.primary_access_key
+  storage_account_name       = azurerm_storage_account.healthcare_storage.name
+  storage_account_access_key = azurerm_storage_account.healthcare_storage.primary_access_key
 
   site_config {
     application_stack {
@@ -98,8 +117,8 @@ resource "azurerm_linux_function_app" "healthcare_function" {
   app_settings = {
     "FUNCTIONS_WORKER_RUNTIME"        = "python"
     "AzureWebJobsFeatureFlags"        = "EnableWorkerIndexing"
-    "AZURE_STORAGE_CONNECTION_STRING" = data.azurerm_storage_account.healthcare_storage.primary_connection_string
-    "HEALTHCARE_CONTAINER_NAME"       = data.azurerm_storage_container.healthcare_container.name
+    "AZURE_STORAGE_CONNECTION_STRING" = azurerm_storage_account.healthcare_storage.primary_connection_string
+    "HEALTHCARE_CONTAINER_NAME"       = azurerm_storage_container.healthcare_container.name
   }
 
   tags = {
@@ -112,8 +131,8 @@ resource "azurerm_linux_function_app" "healthcare_function" {
 # Create new API Management
 resource "azurerm_api_management" "healthcare_apim" {
   name                = "healthcare-api-${random_id.apim_suffix.hex}"
-  location            = var.location
-  resource_group_name = data.azurerm_resource_group.healthcare_rg.name
+  location            = azurerm_resource_group.healthcare_rg.location
+  resource_group_name = azurerm_resource_group.healthcare_rg.name
   publisher_name      = "Healthcare Organization"
   publisher_email     = "admin@healthcare.local"
   sku_name            = "Consumption_0"
@@ -128,7 +147,7 @@ resource "azurerm_api_management" "healthcare_apim" {
 # API Management API definition
 resource "azurerm_api_management_api" "healthcare_api" {
   name                = "healthcare-file-api"
-  resource_group_name = data.azurerm_resource_group.healthcare_rg.name
+  resource_group_name = azurerm_resource_group.healthcare_rg.name
   api_management_name = azurerm_api_management.healthcare_apim.name
   revision            = "1"
   display_name        = "Healthcare File Upload API"
@@ -201,7 +220,7 @@ resource "azurerm_api_management_api" "healthcare_api" {
 # API Management Backend
 resource "azurerm_api_management_backend" "healthcare_backend" {
   name                = "healthcare-function-backend"
-  resource_group_name = data.azurerm_resource_group.healthcare_rg.name
+  resource_group_name = azurerm_resource_group.healthcare_rg.name
   api_management_name = azurerm_api_management.healthcare_apim.name
   protocol            = "http"
   url                 = "https://${azurerm_linux_function_app.healthcare_function.default_hostname}/api"
@@ -210,27 +229,27 @@ resource "azurerm_api_management_backend" "healthcare_backend" {
 # Outputs for GitHub Actions and reference
 output "resource_group_name" {
   description = "Name of the resource group"
-  value       = data.azurerm_resource_group.healthcare_rg.name
+  value       = azurerm_resource_group.healthcare_rg.name
 }
 
 output "storage_account_name" {
   description = "Name of the storage account"
-  value       = data.azurerm_storage_account.healthcare_storage.name
+  value       = azurerm_storage_account.healthcare_storage.name
 }
 
 output "container_name" {
   description = "Name of the container"
-  value       = data.azurerm_storage_container.healthcare_container.name
+  value       = azurerm_storage_container.healthcare_container.name
 }
 
 output "storage_account_id" {
   description = "ID of the storage account"
-  value       = data.azurerm_storage_account.healthcare_storage.id
+  value       = azurerm_storage_account.healthcare_storage.id
 }
 
 output "primary_blob_endpoint" {
   description = "Primary blob endpoint of the storage account"
-  value       = data.azurerm_storage_account.healthcare_storage.primary_blob_endpoint
+  value       = azurerm_storage_account.healthcare_storage.primary_blob_endpoint
 }
 
 output "function_app_name" {
