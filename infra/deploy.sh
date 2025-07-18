@@ -3,6 +3,7 @@
 # Complete Terraform Deployment Script
 # This script handles the entire deployment process including state management
 
+
 set -e
 
 # Colors for output
