@@ -237,10 +237,24 @@ jobs:
       - name: Get Terraform Outputs
         id: terraform-outputs
         run: |
-          echo "storage_account_name=$(terraform output -raw storage_account_name)" >> $GITHUB_OUTPUT
-          echo "container_name=$(terraform output -raw container_name)" >> $GITHUB_OUTPUT
-          echo "function_app_name=$(terraform output -raw function_app_name 2>/dev/null || echo '')" >> $GITHUB_OUTPUT
-          echo "api_management_gateway_url=$(terraform output -raw api_management_gateway_url 2>/dev/null || echo '')" >> $GITHUB_OUTPUT
+          echo "🔍 Getting Terraform outputs..."
+          
+          # Get outputs with error handling
+          STORAGE_ACCOUNT_NAME=$(terraform output -raw storage_account_name 2>/dev/null || echo "")
+          CONTAINER_NAME=$(terraform output -raw container_name 2>/dev/null || echo "")
+          FUNCTION_APP_NAME=$(terraform output -raw function_app_name 2>/dev/null || echo "")
+          API_GATEWAY_URL=$(terraform output -raw api_management_gateway_url 2>/dev/null || echo "")
+          
+          echo "🔍 Debug - Storage Account Name: '$STORAGE_ACCOUNT_NAME'"
+          echo "🔍 Debug - Container Name: '$CONTAINER_NAME'"
+          echo "🔍 Debug - Function App Name: '$FUNCTION_APP_NAME'"
+          echo "🔍 Debug - API Gateway URL: '$API_GATEWAY_URL'"
+          
+          # Set GitHub outputs
+          echo "storage_account_name=$STORAGE_ACCOUNT_NAME" >> $GITHUB_OUTPUT
+          echo "container_name=$CONTAINER_NAME" >> $GITHUB_OUTPUT
+          echo "function_app_name=$FUNCTION_APP_NAME" >> $GITHUB_OUTPUT
+          echo "api_management_gateway_url=$API_GATEWAY_URL" >> $GITHUB_OUTPUT
 
     outputs:
       storage_account_name: ${{ steps.terraform-outputs.outputs.storage_account_name }}
@@ -354,25 +368,49 @@ jobs:
           # Create a test file
           echo "Test deployment from GitHub Actions - $(date)" > test-deployment.txt
 
-          # Get storage account connection string
+          # Get storage account connection string with debugging
           STORAGE_ACCOUNT_NAME="${{ needs.terraform-apply.outputs.storage_account_name }}"
           RESOURCE_GROUP="healthcare-content-rg"
 
+          echo "🔍 Debug: STORAGE_ACCOUNT_NAME='$STORAGE_ACCOUNT_NAME'"
+          echo "🔍 Debug: RESOURCE_GROUP='$RESOURCE_GROUP'"
+
+          # If storage account name is empty, try to get it from Azure
+          if [ -z "$STORAGE_ACCOUNT_NAME" ]; then
+            echo "⚠️ Storage account name not found in Terraform outputs, searching Azure..."
+            STORAGE_ACCOUNT_NAME=$(az storage account list \
+              --resource-group $RESOURCE_GROUP \
+              --query "[?contains(name, 'healthcare')].name" \
+              --output tsv | head -1)
+            echo "🔍 Found storage account: $STORAGE_ACCOUNT_NAME"
+          fi
+
+          if [ -z "$STORAGE_ACCOUNT_NAME" ]; then
+            echo "❌ Could not determine storage account name"
+            exit 1
+          fi
+
           CONNECTION_STRING=$(az storage account show-connection-string \
-            --name $STORAGE_ACCOUNT_NAME \
-            --resource-group $RESOURCE_GROUP \
+            --name "$STORAGE_ACCOUNT_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
             --output tsv)
 
           # Export the connection string for the Python script
           export AZURE_STORAGE_CONNECTION_STRING="$CONNECTION_STRING"
 
           # Test the upload functionality
+          CONTAINER_NAME="${{ needs.terraform-apply.outputs.container_name }}"
+          if [ -z "$CONTAINER_NAME" ]; then
+            CONTAINER_NAME="healthcare-files"
+            echo "🔍 Using default container name: $CONTAINER_NAME"
+          fi
+
           python -c "
           import os
           from upload_to_blob import upload_file_to_blob
 
           connection_string = os.environ['AZURE_STORAGE_CONNECTION_STRING']
-          container_name = '${{ needs.terraform-apply.outputs.container_name }}'
+          container_name = '$CONTAINER_NAME'
 
           try:
               url = upload_file_to_blob('test-deployment.txt', 'test-deployment.txt', connection_string, container_name)
