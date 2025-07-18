@@ -194,13 +194,13 @@ resource "azurerm_api_management" "healthcare_apim" {
 
 # API Management API definition
 resource "azurerm_api_management_api" "healthcare_api" {
-  name                = "healthcare-file-api"
-  resource_group_name = azurerm_resource_group.healthcare_rg.name
-  api_management_name = azurerm_api_management.healthcare_apim.name
-  revision            = "1"
-  display_name        = "Healthcare File Upload API"
-  path                = "files"
-  protocols           = ["https"]
+  name                  = "healthcare-file-api"
+  resource_group_name   = azurerm_resource_group.healthcare_rg.name
+  api_management_name   = azurerm_api_management.healthcare_apim.name
+  revision              = "1"
+  display_name          = "Healthcare File Upload API"
+  path                  = "files"
+  protocols             = ["https"]
   subscription_required = false
 
   import {
