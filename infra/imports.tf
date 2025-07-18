@@ -1,8 +1,8 @@
 # Terraform Import Configuration
 # This file defines how to import existing resources automatically
-# Currently disabled since we're creating fresh resources
+# Currently disabled to allow Terraform to create resources cleanly
 
-# NOTE: Import blocks are commented out since we're creating new resources
+# NOTE: Import blocks are commented out since we're letting Terraform create all resources
 # Uncomment these if you need to import existing resources later
 
 # import {

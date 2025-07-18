@@ -5,7 +5,7 @@
 
 terraform {
   backend "azurerm" {
-    resource_group_name  = "healthcare-content-rg"
+    resource_group_name  = "healthcare-terraform-state-rg"
     storage_account_name = "healthcarestorefv0vlbg2"
     container_name       = "terraform-state"
     key                  = "healthcare-infrastructure.tfstate"

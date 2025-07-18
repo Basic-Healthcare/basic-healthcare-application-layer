@@ -55,35 +55,36 @@ jobs:
 
       - name: Setup Backend Infrastructure
         run: |
-          echo "🚀 Setting up backend infrastructure..."
+          echo "🚀 Setting up Terraform backend infrastructure only..."
           
-          # Create resource group if it doesn't exist
+          # Create backend resource group for Terraform state (separate from application resources)
           az group create \
-            --name healthcare-content-rg \
+            --name healthcare-terraform-state-rg \
             --location eastus \
-            --tags Environment=dev ManagedBy=Terraform Project=HealthcareApp \
+            --tags Environment=shared ManagedBy=GitHubActions Purpose=TerraformState \
             --only-show-errors || true
           
-          # Create storage account if it doesn't exist
+          # Create storage account for Terraform state only
           az storage account create \
             --name healthcarestorefv0vlbg2 \
-            --resource-group healthcare-content-rg \
+            --resource-group healthcare-terraform-state-rg \
             --location eastus \
             --sku Standard_LRS \
             --kind StorageV2 \
             --min-tls-version TLS1_2 \
-            --tags Environment=dev ManagedBy=Terraform Project=HealthcareApp \
+            --tags Environment=shared ManagedBy=GitHubActions Purpose=TerraformState \
             --only-show-errors || true
           
           # Create terraform state container
           az storage container create \
             --name terraform-state \
             --account-name healthcarestorefv0vlbg2 \
-            --resource-group healthcare-content-rg \
+            --resource-group healthcare-terraform-state-rg \
             --public-access off \
             --only-show-errors || true
           
-          echo "✅ Backend infrastructure ready!"
+          echo "✅ Terraform backend infrastructure ready!"
+          echo "ℹ️  Application resources will be managed by Terraform"
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
@@ -138,35 +139,36 @@ jobs:
 
       - name: Setup Backend Infrastructure
         run: |
-          echo "🚀 Setting up backend infrastructure..."
+          echo "🚀 Setting up Terraform backend infrastructure only..."
           
-          # Create resource group if it doesn't exist
+          # Create backend resource group for Terraform state (separate from application resources)
           az group create \
-            --name healthcare-content-rg \
+            --name healthcare-terraform-state-rg \
             --location eastus \
-            --tags Environment=dev ManagedBy=Terraform Project=HealthcareApp \
+            --tags Environment=shared ManagedBy=GitHubActions Purpose=TerraformState \
             --only-show-errors || true
           
-          # Create storage account if it doesn't exist
+          # Create storage account for Terraform state only
           az storage account create \
             --name healthcarestorefv0vlbg2 \
-            --resource-group healthcare-content-rg \
+            --resource-group healthcare-terraform-state-rg \
             --location eastus \
             --sku Standard_LRS \
             --kind StorageV2 \
             --min-tls-version TLS1_2 \
-            --tags Environment=dev ManagedBy=Terraform Project=HealthcareApp \
+            --tags Environment=shared ManagedBy=GitHubActions Purpose=TerraformState \
             --only-show-errors || true
           
           # Create terraform state container
           az storage container create \
             --name terraform-state \
             --account-name healthcarestorefv0vlbg2 \
-            --resource-group healthcare-content-rg \
+            --resource-group healthcare-terraform-state-rg \
             --public-access off \
             --only-show-errors || true
           
-          echo "✅ Backend infrastructure ready!"
+          echo "✅ Terraform backend infrastructure ready!"
+          echo "ℹ️  Application resources will be managed by Terraform"
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
