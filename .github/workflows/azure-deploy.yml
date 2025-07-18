@@ -36,8 +36,18 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Setup Remote State Storage
+        run: |
+          # Ensure the terraform state container exists
+          az storage container create \
+            --name terraform-state \
+            --account-name healthcarestorefv0vlbg2 \
+            --resource-group healthcare-content-rg \
+            --public-access off \
+            --only-show-errors || true
+
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -upgrade
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
@@ -82,8 +92,18 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Setup Remote State Storage
+        run: |
+          # Ensure the terraform state container exists
+          az storage container create \
+            --name terraform-state \
+            --account-name healthcarestorefv0vlbg2 \
+            --resource-group healthcare-content-rg \
+            --public-access off \
+            --only-show-errors || true
+
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -upgrade
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}

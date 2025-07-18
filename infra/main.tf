@@ -18,6 +18,9 @@ provider "azurerm" {
   features {}
 }
 
+# Data source to get current Azure configuration
+data "azurerm_client_config" "current" {}
+
 # Variables for customization
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
