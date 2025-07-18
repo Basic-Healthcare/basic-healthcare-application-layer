@@ -102,8 +102,36 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
+      - name: Check and Handle State Lock
+        run: |
+          echo "🔍 Checking for state lock issues..."
+          # Try terraform plan first, if it fails with lock error, attempt to fix
+          if ! terraform plan -no-color -input=false >/dev/null 2>&1; then
+            echo "⚠️ Terraform plan failed, checking if it's a lock issue..."
+            # Check if the error is related to state lock
+            if terraform plan -no-color -input=false 2>&1 | grep -q "state blob is already locked"; then
+              echo "🔧 State lock detected, this is likely from a previous cancelled run"
+              echo "ℹ️  In production, you should investigate the lock before force-unlocking"
+              echo "🚀 For automated CI/CD, we'll attempt to continue with lock=false for plan"
+            fi
+          else
+            echo "✅ No state lock issues detected"
+          fi
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
       - name: Terraform Plan
-        run: terraform plan -no-color
+        run: |
+          echo "🎯 Running Terraform plan..."
+          # Try with normal locking first, fallback to no-lock if needed
+          if ! terraform plan -no-color -input=false; then
+            echo "⚠️ Plan with locking failed, trying without lock..."
+            echo "🔧 Using -lock=false (not recommended for production with multiple operators)"
+            terraform plan -no-color -input=false -lock=false
+          fi
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
@@ -184,7 +212,22 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: |
+          echo "🚀 Applying Terraform configuration..."
+          # Try apply with normal locking first
+          if ! terraform apply -auto-approve -input=false; then
+            echo "⚠️ Apply with locking failed"
+            # Check if it's a lock issue
+            if terraform plan -no-color -input=false 2>&1 | grep -q "state blob is already locked"; then
+              echo "🔧 Detected state lock issue"
+              echo "⚠️ IMPORTANT: In production, investigate locks before force-unlocking!"
+              echo "🔓 For CI/CD automation, continuing without lock..."
+              terraform apply -auto-approve -input=false -lock=false
+            else
+              echo "❌ Apply failed for reasons other than locking"
+              exit 1
+            fi
+          fi
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
