@@ -64,3 +64,31 @@ Thumbs.db
 
 # Azure CLI
 .azure/
+
+# Secrets and credentials (additional protection)
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.txt
+secrets.json
+secrets.yaml
+secrets.yml
+.secrets/
+credentials.json
+appsettings.local.json
+local.settings.json
+
+# Environment files with secrets
+.env.local
+.env.development
+.env.production
+.env.secret
+
+# Azure Function local settings
+local.settings.json
+
+# SSH keys
+id_rsa
+id_rsa.pub
+*.ppk
