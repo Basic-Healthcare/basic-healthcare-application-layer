@@ -56,6 +56,14 @@ resource "azurerm_resource_group" "healthcare_rg" {
     Project     = "HealthcareApp"
     ManagedBy   = "Terraform"
   }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      tags["CreatedOn"],
+      tags["LastModified"]
+    ]
+  }
 }
 
 # Create storage account if it doesn't exist
@@ -71,6 +79,14 @@ resource "azurerm_storage_account" "healthcare_storage" {
     Project     = "HealthcareApp"
     ManagedBy   = "Terraform"
   }
+
+  lifecycle {
+    prevent_destroy = true
+    ignore_changes = [
+      tags["CreatedOn"],
+      tags["LastModified"]
+    ]
+  }
 }
 
 # Create storage container
@@ -78,6 +94,10 @@ resource "azurerm_storage_container" "healthcare_container" {
   name                  = "healthcare-files"
   storage_account_name  = azurerm_storage_account.healthcare_storage.name
   container_access_type = "private"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # Create new Azure Service Plan
@@ -92,6 +112,14 @@ resource "azurerm_service_plan" "healthcare_plan" {
     Environment = var.environment
     Project     = "HealthcareApp"
     ManagedBy   = "Terraform"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [
+      tags["CreatedOn"],
+      tags["LastModified"]
+    ]
   }
 }
 
@@ -126,6 +154,15 @@ resource "azurerm_linux_function_app" "healthcare_function" {
     Project     = "HealthcareApp"
     ManagedBy   = "Terraform"
   }
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [
+      tags["CreatedOn"],
+      tags["LastModified"],
+      app_settings["WEBSITE_RUN_FROM_PACKAGE"]
+    ]
+  }
 }
 
 # Create new API Management
@@ -141,6 +178,14 @@ resource "azurerm_api_management" "healthcare_apim" {
     Environment = var.environment
     Project     = "HealthcareApp"
     ManagedBy   = "Terraform"
+  }
+
+  lifecycle {
+    create_before_destroy = true
+    ignore_changes = [
+      tags["CreatedOn"],
+      tags["LastModified"]
+    ]
   }
 }
 
@@ -215,6 +260,10 @@ resource "azurerm_api_management_api" "healthcare_api" {
       }
     })
   }
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # API Management Backend
@@ -224,6 +273,10 @@ resource "azurerm_api_management_backend" "healthcare_backend" {
   api_management_name = azurerm_api_management.healthcare_apim.name
   protocol            = "http"
   url                 = "https://${azurerm_linux_function_app.healthcare_function.default_hostname}/api"
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Outputs for GitHub Actions and reference
