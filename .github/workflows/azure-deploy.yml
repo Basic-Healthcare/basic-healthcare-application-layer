@@ -36,6 +36,24 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Verify Secrets
+        run: |
+          echo "🔍 Verifying GitHub secrets are available..."
+          if [ -z "$ARM_CLIENT_ID" ]; then
+            echo "❌ ARM_CLIENT_ID secret is missing!"
+            exit 1
+          fi
+          if [ -z "$ARM_CLIENT_SECRET" ]; then
+            echo "❌ ARM_CLIENT_SECRET secret is missing!"
+            exit 1
+          fi
+          echo "✅ Required secrets are present"
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
       - name: Setup Backend Infrastructure
         run: |
           echo "🚀 Setting up backend infrastructure..."
