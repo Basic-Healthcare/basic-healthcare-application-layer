@@ -59,7 +59,7 @@ jobs:
           
           # Create backend resource group for Terraform state (separate from application resources)
           az group create \
-            --name healthcare-terraform-state-rg \
+            --name healthcare-content-rg \
             --location eastus \
             --tags Environment=shared ManagedBy=GitHubActions Purpose=TerraformState \
             --only-show-errors || true
@@ -67,7 +67,7 @@ jobs:
           # Create storage account for Terraform state only
           az storage account create \
             --name healthcarestorefv0vlbg2 \
-            --resource-group healthcare-terraform-state-rg \
+            --resource-group healthcare-content-rg \
             --location eastus \
             --sku Standard_LRS \
             --kind StorageV2 \
@@ -79,7 +79,7 @@ jobs:
           az storage container create \
             --name terraform-state \
             --account-name healthcarestorefv0vlbg2 \
-            --resource-group healthcare-terraform-state-rg \
+            --resource-group healthcare-content-rg \
             --public-access off \
             --only-show-errors || true
           
@@ -143,7 +143,7 @@ jobs:
           
           # Create backend resource group for Terraform state (separate from application resources)
           az group create \
-            --name healthcare-terraform-state-rg \
+            --name healthcare-content-rg \
             --location eastus \
             --tags Environment=shared ManagedBy=GitHubActions Purpose=TerraformState \
             --only-show-errors || true
@@ -151,7 +151,7 @@ jobs:
           # Create storage account for Terraform state only
           az storage account create \
             --name healthcarestorefv0vlbg2 \
-            --resource-group healthcare-terraform-state-rg \
+            --resource-group healthcare-content-rg \
             --location eastus \
             --sku Standard_LRS \
             --kind StorageV2 \
@@ -163,7 +163,7 @@ jobs:
           az storage container create \
             --name terraform-state \
             --account-name healthcarestorefv0vlbg2 \
-            --resource-group healthcare-terraform-state-rg \
+            --resource-group healthcare-content-rg \
             --public-access off \
             --only-show-errors || true
           
