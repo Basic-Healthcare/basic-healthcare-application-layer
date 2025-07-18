@@ -36,15 +36,37 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Setup Remote State Storage
+      - name: Setup Backend Infrastructure
         run: |
-          # Ensure the terraform state container exists
+          echo "🚀 Setting up backend infrastructure..."
+          
+          # Create resource group if it doesn't exist
+          az group create \
+            --name healthcare-content-rg \
+            --location eastus \
+            --tags Environment=dev ManagedBy=Terraform Project=HealthcareApp \
+            --only-show-errors || true
+          
+          # Create storage account if it doesn't exist
+          az storage account create \
+            --name healthcarestorefv0vlbg2 \
+            --resource-group healthcare-content-rg \
+            --location eastus \
+            --sku Standard_LRS \
+            --kind StorageV2 \
+            --min-tls-version TLS1_2 \
+            --tags Environment=dev ManagedBy=Terraform Project=HealthcareApp \
+            --only-show-errors || true
+          
+          # Create terraform state container
           az storage container create \
             --name terraform-state \
             --account-name healthcarestorefv0vlbg2 \
             --resource-group healthcare-content-rg \
             --public-access off \
             --only-show-errors || true
+          
+          echo "✅ Backend infrastructure ready!"
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
@@ -97,15 +119,37 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Setup Remote State Storage
+      - name: Setup Backend Infrastructure
         run: |
-          # Ensure the terraform state container exists
+          echo "🚀 Setting up backend infrastructure..."
+          
+          # Create resource group if it doesn't exist
+          az group create \
+            --name healthcare-content-rg \
+            --location eastus \
+            --tags Environment=dev ManagedBy=Terraform Project=HealthcareApp \
+            --only-show-errors || true
+          
+          # Create storage account if it doesn't exist
+          az storage account create \
+            --name healthcarestorefv0vlbg2 \
+            --resource-group healthcare-content-rg \
+            --location eastus \
+            --sku Standard_LRS \
+            --kind StorageV2 \
+            --min-tls-version TLS1_2 \
+            --tags Environment=dev ManagedBy=Terraform Project=HealthcareApp \
+            --only-show-errors || true
+          
+          # Create terraform state container
           az storage container create \
             --name terraform-state \
             --account-name healthcarestorefv0vlbg2 \
             --resource-group healthcare-content-rg \
             --public-access off \
             --only-show-errors || true
+          
+          echo "✅ Backend infrastructure ready!"
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
